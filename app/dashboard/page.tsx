@@ -202,7 +202,9 @@ export default function DashboardPage() {
               <div>
                 {boards.map((board) => (
                   <Link href={`/boards/${board.id}`}>
-                    <Card></Card>
+                    <Card>
+                      
+                    </Card>
                   </Link>
                 ))}
               </div>

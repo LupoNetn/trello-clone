@@ -137,6 +137,29 @@ export const taskService = {
 
     return data || [];
   },
+
+  async createTask(
+    supabase: SupabaseClient,
+    task: Omit<Task, "id" | "created_at" | "updated_at">
+  ): Promise<Task> {
+    console.log("Creating task with data:", task);
+
+    const { data, error } = await supabase
+      .from("tasks")
+      .insert(task)
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Error creating column:", error.message, error.details);
+      throw error;
+    }
+
+    console.log("Column created:", data);
+    return data;
+  },
+
+
 };
 
 

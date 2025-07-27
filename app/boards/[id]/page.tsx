@@ -1,5 +1,6 @@
 "use client";
 import Navbar from "@/components/Navbar";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -9,12 +10,20 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useBoard } from "@/lib/hooks/useBoards";
+import { ColumnWithTasks, Task } from "@/lib/supabase/models";
 import { useSupabase } from "@/lib/supabase/supabaseProvider";
 import { DialogTitle } from "@radix-ui/react-dialog";
-import { Plus } from "lucide-react";
+import { create } from "domain";
+import { MoreHorizontal, Plus } from "lucide-react";
 import { useParams } from "next/navigation";
 import { useState } from "react";
 
@@ -33,9 +42,49 @@ const tailwindColors = [
   "bg-rose-500",
 ];
 
+function Column({
+  column,
+  children,
+  onCreateTask,
+  onEditColumn,
+}: {
+  column: ColumnWithTasks;
+  children: React.ReactNode;
+  onCreateTask: (taskData: any) => Promise<void>;
+  onEditColumn: (column: ColumnWithTasks) => void;
+}) {
+  return (
+    <div className="w-full lg:max-w-[400px] lg:flex-shrink-0 lg-w-80">
+      <div className="bg-white rounded-lg shadow-sm border">
+        {/* Column Header  */}
+        <div className="p-3 sm:p-4 border-b">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2 min-w-0">
+              <h3 className="font-semibold text-gray-900 text-sm sm:text-base truncate">
+                {column.title}
+              </h3>
+              <Badge variant="secondary" className="text-xs flex-shrink-0">
+                {column.tasks.length}
+              </Badge>
+            </div>
+            <Button variant="ghost" size="sm" className="flex-shrink-0">
+              <MoreHorizontal />
+            </Button>
+          </div>
+        </div>
+
+        {/* Column Content */}
+        <div className="p-2">{children}</div>
+      </div>
+    </div>
+  );
+}
+
+function Task({ task }: { task: Task }) {}
+
 export default function BoardPage() {
   const { id } = useParams<{ id: string }>();
-  const { board, updateBoard, columns } = useBoard(id);
+  const { board, updateBoard, columns, createRealTask } = useBoard(id);
   const { supabase } = useSupabase();
 
   const [isEditingTitle, setIsEditingTitle] = useState(false);
@@ -54,6 +103,44 @@ export default function BoardPage() {
       });
       setIsEditingTitle(false);
     } catch (error) {}
+  }
+
+  async function createTask(taskData: {
+    title: string;
+    description?: string;
+    assignee?: string;
+    dueDate?: string;
+    priority: "low" | "medium" | "high";
+  }) {
+    const targetColumn = columns[0];
+    if (!targetColumn) {
+      throw new Error("No column available to add task");
+    }
+
+    await createRealTask(targetColumn.id, taskData);
+  }
+
+  async function handleCreateTask(e: any) {
+    e.preventDefault();
+
+    const formData = new FormData(e.currentTarget);
+    const taskData = {
+      title: formData.get("title") as string,
+      description: (formData.get("description") as string) || undefined,
+      assignee: (formData.get("assignee") as string) || undefined,
+      dueDate: (formData.get("dueDate") as string) || undefined,
+      priority:
+        (formData.get("title") as "low" | "medium" | "high") || "medium",
+    };
+
+    if (taskData.title.trim()) {
+      await createTask(taskData);
+
+      const trigger = document.querySelector(
+        '[data-state="open"'
+      ) as HTMLElement;
+      if (trigger) trigger.click();
+    }
   }
 
   return (
@@ -195,8 +282,8 @@ export default function BoardPage() {
                 <p className="text-sm text-gray-600">Add a task to the board</p>
               </DialogHeader>
 
-              <form>
-                <div>
+              <form className="space-y-4" onSubmit={handleCreateTask}>
+                <div className="space-y-2">
                   <Label>Title *</Label>
                   <Input
                     id="title"
@@ -205,7 +292,7 @@ export default function BoardPage() {
                   />
                 </div>
 
-                <div>
+                <div className="space-y-2">
                   <Label>Description</Label>
                   <Textarea
                     id="description"
@@ -215,7 +302,7 @@ export default function BoardPage() {
                   />
                 </div>
 
-                <div>
+                <div className="space-y-2">
                   <Label>Assignee</Label>
                   <Input
                     id="assignee"
@@ -224,30 +311,51 @@ export default function BoardPage() {
                   />
                 </div>
 
-                <div>
+                <div className="space-y-2">
+                  <Label>Due Date</Label>
+                  <Input id="dueDate" name="dueDate" type="date" />
+                </div>
+
+                <div className="space-y-2">
                   <Label>Priority</Label>
                   <Select name="priority" defaultValue="medium">
                     <SelectTrigger>
-                        <SelectValue />
+                      <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                    {["low", "medium", "high"].map((priority, key) => (
-                      <SelectItem key={key} value={priority}>
-                        {priority.charAt(0).toUpperCase() + priority.slice(1)}
-                      </SelectItem>
-                    ))}
+                      {["low", "medium", "high"].map((priority, key) => (
+                        <SelectItem key={key} value={priority}>
+                          {priority.charAt(0).toUpperCase() + priority.slice(1)}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
 
-                <div>
-                    <Button>Create Task</Button>
+                <div className="flex justify-end space-x-2 pt-4">
+                  <Button type="submit">Create Task</Button>
                 </div>
-
-
               </form>
             </DialogContent>
           </Dialog>
+        </div>
+
+        {/* Board Columns */}
+        <div className="flex flex-col lg:flex-row lg:space-x-6 lg:overflow-x-auto lg:pb-6 lg:px-2 lg:mx-2 lg:[&::-webkit-scrollbar]:h-2 lg:[&::-webkit-scrollbar-track]:bg-gray-300 lg:[&::-webkit-scrollbar-thumb]:bg-gray-300 lg:[&::-webkit-scrollbar-track]:rounded-full space-y-4 lg:space-y-8">
+          {columns.map((column, key) => (
+            <Column
+              key={key}
+              column={column}
+              onCreateTask={createTask}
+              onEditColumn={() => {}}
+            >
+              <div className="space-y-3">
+                {column.tasks.map((task, key) => (
+                  <Task task={task} key={key} />
+                ))}
+              </div>
+            </Column>
+          ))}
         </div>
       </main>
     </div>

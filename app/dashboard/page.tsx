@@ -24,11 +24,50 @@ import {
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
+import { boardService } from "@/lib/services";
+
+
 
 export default function DashboardPage() {
   const { user } = useUser();
   const { createBoard, boards, loading, error } = useBoards();
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+
+
+  const DashboardAnalytics = [
+  {
+    title: 'Total Boards',
+    analytic: boards.length,
+    icon: <Trello />,
+    iconColor: 'text-blue-600',
+    bgIconColor: 'bg-blue-100',
+  },
+  {
+    title: 'Active Projects',
+    analytic: boards.length,
+    icon: <Rocket />,
+    iconColor: 'text-green-600',
+    bgIconColor: 'bg-green-100',
+  },
+  {
+    title: 'Recent Activity',
+    analytic:  boards.filter((board) => {
+                          const updatedAt = new Date(board.updated_at);
+                          const oneWeekAgo = new Date();
+                          oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+                          return updatedAt > oneWeekAgo;
+                        }).length,
+    icon: '📊',
+    bgIconColor: 'bg-purple-100'
+  },
+  {
+    title: 'Total Boards',
+    analytic: boards.length,
+    icon: <Trello />,
+    iconColor: 'text-blue-600',
+    bgIconColor: 'bg-blue-100',
+  },
+];
 
   const handleCreateBoard = async () => {
     await createBoard({
@@ -68,7 +107,7 @@ export default function DashboardPage() {
             <p className="text-gray-600">
               Here's what's happening with your boards today.
             </p>
-            <Button className="w-full sm:w-auto" onClick={handleCreateBoard}>
+            <Button className="w-full sm:w-auto mt-2" onClick={handleCreateBoard}>
               <Plus className="h-4 w-4 mr-2" />
               Create Board
             </Button>
@@ -76,82 +115,25 @@ export default function DashboardPage() {
 
           {/* Stats */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
-            <Card>
+            {DashboardAnalytics.map((analytic,idx) => (
+              <Card>
               <CardContent className="p-4 sm:p-6">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-xs sm:text-sm font-medium text-gray-600">
-                      Total Boards
+                      {analytic.title}
                     </p>
                     <p className="text-xl sm:text-2xl font-bold text-gray-900">
-                      {boards.length}
+                      {analytic.analytic}
                     </p>
                   </div>
-                  <div className="h- w-10 sm:h-12 sm:w-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <Trello className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600" />
+                  <div className={`h- w-10 sm:h-12 sm:w-12 ${analytic.bgIconColor} rounded-lg flex items-center justify-center`}>
+                    <span className={`h-5 w-5 sm:h-6 sm:w-6 ${analytic.iconColor}`}>{analytic.icon}</span>
                   </div>
                 </div>
               </CardContent>
             </Card>
-            <Card>
-              <CardContent className="p-4 sm:p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs sm:text-sm font-medium text-gray-600">
-                      Active Projects
-                    </p>
-                    <p className="text-xl sm:text-2xl font-bold text-gray-900">
-                      {boards.length}
-                    </p>
-                  </div>
-                  <div className="h- w-10 sm:h-12 sm:w-12 bg-green-100 rounded-lg flex items-center justify-center">
-                    <Rocket className="h-5 w-5 sm:h-6 sm:w-6 text-green-600" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="p-4 sm:p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs sm:text-sm font-medium text-gray-600">
-                      Recent Activity
-                    </p>
-                    <p className="text-xl sm:text-2xl font-bold text-gray-900">
-                      {
-                        boards.filter((board) => {
-                          const updatedAt = new Date(board.updated_at);
-                          const oneWeekAgo = new Date();
-                          oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-                          return updatedAt > oneWeekAgo;
-                        }).length
-                      }
-                    </p>
-                  </div>
-                  <div className="h- w-10 sm:h-12 sm:w-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                    <div className="h-5 w-5 sm:h-6 sm:w-6">📊</div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4 sm:p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs sm:text-sm font-medium text-gray-600">
-                      Total Boards
-                    </p>
-                    <p className="text-xl sm:text-2xl font-bold text-gray-900">
-                      {boards.length}
-                    </p>
-                  </div>
-                  <div className="h- w-10 sm:h-12 sm:w-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <Trello className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            ))}
           </div>
 
           {/* BOARDS */}
@@ -254,43 +236,43 @@ export default function DashboardPage() {
                 </Card>
               </div>
             ) : (
-              <div>
+             <div>
                 {boards.map((board, key) => (
                   <div key={key} className={key > 0 ? "mt-4" : ""}>
-                    <Link href={`/boards/${board.id}`}>
-                      <Card className="hover:shadow-lg transition-shadow cursor-pointer group">
-                        <CardHeader className="pb-3">
-                          <div className="flex items-center justify-between">
-                            <div className={`w-4 h-4 ${board.color} rounded`} />
-                            <Badge className="text-sm" variant="secondary">
-                              New
-                            </Badge>
-                          </div>
-                        </CardHeader>
-                        <CardContent className="p-4 sm:p-6">
-                          <CardTitle className="text-base sm:text-lg mb-2 group-hover:text-blue-600 transition-colors">
-                            {board.title}
-                          </CardTitle>
-                          <CardDescription className="text-sm mb-4">
-                            {board.description}
-                          </CardDescription>
-                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between text-xs text-gray-500 space-y-1 sm:space-y-0">
-                            <span>
-                              Created:{" "}
-                              {new Date(board.created_at).toLocaleDateString()}
-                            </span>
-                            {"  "}
-                            <span>
-                              Updated:{" "}
-                              {new Date(board.updated_at).toLocaleDateString()}
-                            </span>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </Link>
+                  <Link href={`/boards/${board.id}`}>
+                    <Card className="hover:shadow-lg transition-shadow cursor-pointer group">
+                      <CardHeader className="pb-3">
+                        <div className="flex items-center justify-between">
+                          <div className={`w-4 h-4 ${board.color} rounded`} />
+                          <Badge className="text-sm" variant="secondary">
+                            New
+                          </Badge>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="p-4 sm:p-6">
+                        <CardTitle className="text-base sm:text-lg mb-2 group-hover:text-blue-600 transition-colors">
+                          {board.title}
+                        </CardTitle>
+                        <CardDescription className="text-sm mb-4">
+                          {board.description}
+                        </CardDescription>
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between text-xs text-gray-500 space-y-1 sm:space-y-0">
+                          <span>
+                            Created:{" "}
+                            {new Date(board.created_at).toLocaleDateString()}
+                          </span>
+                          {"  "}
+                          <span>
+                            Updated:{" "}
+                            {new Date(board.updated_at).toLocaleDateString()}
+                          </span>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </Link>
                   </div>
                 ))}
-
+z
                 <Card
                   className="mt-4 border-2 border-dashed border-gray-300 hover:border-blue-400 transition-colors cursor-pointer group"
                   onClick={handleCreateBoard}

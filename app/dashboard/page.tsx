@@ -75,14 +75,14 @@ export default function DashboardPage() {
     });
   };
 
-  if (loading) {
-    return (
-      <div>
-        <Loader2 />
-        <span>Loading your boards</span>
-      </div>
-    );
-  }
+  // if (loading) {
+  //   return (
+  //     <div>
+  //       <Loader2 />
+  //       <span>Loading your boards</span>
+  //     </div>
+  //   );
+  // }
 
   if (error) {
     return (
@@ -186,7 +186,9 @@ export default function DashboardPage() {
 
             {/* Boards Grid/List */}
             {boards.length === 0 ? (
-              <div>No boards yet</div>
+              <div className="flex justify-center items-center text-3xl text-gray-800">
+                No boards yet
+              </div>
             ) : viewMode === "grid" ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
                 {boards.map((board, key) => (

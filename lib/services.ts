@@ -116,17 +116,18 @@ export const columnService = {
 };
 
 export const taskService = {
-  
   async getTasksByBoard(
     supabase: SupabaseClient,
     boardId: string
   ): Promise<Task[]> {
     const { data, error } = await supabase
       .from("tasks")
-      .select(`
+      .select(
+        `
          *,
           columns ! inner(board_id)
-        `)
+        `
+      )
       .eq("columns.board_id", boardId)
       .order("sort_order", { ascending: true });
 
@@ -158,10 +159,7 @@ export const taskService = {
     console.log("Column created:", data);
     return data;
   },
-
-
 };
-
 
 export const BoardDataService = {
   async getBoardWithColumns(supabase: SupabaseClient, boardId: string) {
@@ -174,13 +172,13 @@ export const BoardDataService = {
       throw new Error("Board not found");
     }
 
-    const tasks = await taskService.getTasksByBoard(supabase, boardId)
+    const tasks = await taskService.getTasksByBoard(supabase, boardId);
 
     const columnsWithTasks = columns.map((column) => ({
       ...column,
-      tasks: tasks.filter((task) => task.column_id === column.id)
-    }))
-     
+      tasks: tasks.filter((task) => task.column_id === column.id),
+    }));
+
     return {
       board,
       columnsWithTasks,

@@ -1,7 +1,7 @@
 "use client";
 
 import { useUser } from "@clerk/nextjs";
-import { BoardDataService, boardService,taskService } from "../services";
+import { BoardDataService, boardService, taskService } from "../services";
 import { useEffect, useState } from "react";
 import { Board, Column, ColumnWithTasks } from "../supabase/models";
 import { useSupabase } from "../supabase/supabaseProvider";
@@ -127,11 +127,12 @@ export function useBoard(boardId: string) {
   async function createRealTask(
     columnId: string,
     taskData: {
-    title: string;
-    description?: string;
-    assignee?: string;
-    dueDate?: string;
-    priority: 'low' | 'medium' | 'high';}
+      title: string;
+      description?: string;
+      assignee?: string;
+      dueDate?: string;
+      priority: "low" | "medium" | "high";
+    }
   ) {
     try {
       const newTask = await taskService.createTask(supabase!, {
@@ -140,22 +141,26 @@ export function useBoard(boardId: string) {
         assignee: taskData.assignee || null,
         due_date: taskData.dueDate || null,
         column_id: columnId,
-        sort_order: columns.find(col => col.id === columnId)?.tasks.length || 0,
-        priority: taskData.priority || 'medium'
+        sort_order:
+          columns.find((col) => col.id === columnId)?.tasks.length || 0,
+        priority: taskData.priority || "medium",
       });
 
-      setColumns((prev) => prev.map(( col) => col.id === columnId ? {...col, tasks: [...col.tasks,newTask]} : col))
+      setColumns((prev) =>
+        prev.map((col) =>
+          col.id === columnId ? { ...col, tasks: [...col.tasks, newTask] } : col
+        )
+      );
 
-      return newTask
+      return newTask;
     } catch (error) {
-       setError(
+      setError(
         error instanceof Error
           ? error.message
           : "An error occurred while creatung the task"
       );
     }
-   
   }
 
-  return { board, columns, loading, error,updateBoard,createRealTask };
+  return { board, columns, loading, error, updateBoard, createRealTask,setColumns };
 }
